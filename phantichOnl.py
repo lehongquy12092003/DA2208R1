@@ -1,26 +1,31 @@
 import pandas as pd
-import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler,StandardScaler,RobustScaler
+import datetime
+
 df = pd.read_csv("OnlineRetail.csv")
-# Kiểm tra dữ liệu
-print(df.info())
-print(df.describe())
-# Phát hiện các dòng, các cột chứa giá trị khuyết thiếu
-print(df.isna())
-# Thay thế giá trị khuyết thiếu của thuộc tính Description bằng giá trị mặc định "Không biết"
-df["Description"].fillna("Không biết")
-print(df)
-# Thực hiện phát hiện giá trị ngoại lai của thuộc tính Quantity và thuộc tính UnitPrice 
-# sns.kdeplot(data=df["Quantity"])
+
+df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate'])
+d1 = df[['InvoiceNo', 'InvoiceDate']]
+d1 = d1.drop_duplicates(subset = 'InvoiceNo', keep = 'first') # Nếu cột InvoiceNo mà có dữ liệu trùng nhau thì giữ cái đầu tiên
+d1 = d1.set_index(['InvoiceDate'])
+d2 = d1['2011']
+d2 = d2.reset_index()
+d3 = d2.groupby(by=d2['InvoiceDate'].dt.date).count()
+
+x = d3.index.get_level_values(0)
+# plt.plot(x, d3['InvoiceDate'])
+# plt.title('Number of Invoices in 2011 (Daily)', fontsize = 16)
+# plt.xlabel('Date', fontsize = 14)
+# plt.ylabel('#Invoices', fontsize = 14)
 # plt.show()
-# sns.kdeplot(data=df["UnitPrice"])
-# plt.show()
-# Lọc dữ liệu ngoại lai
-Q1 = df.quantile(0.25)
-Q3 = df.quantile(0.75)
-IQR = Q3 - Q1
-df2 = df[~((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))).any(axis=1)]
-df2.boxplot()
+
+# Dữ liệu cần thiết cho mục tiêu 2
+d4 = d2.groupby(by=d2["InvoiceDate"].dt.month).count()
+print(d4)
+# Vẽ biểu đồ cột so sánh số lượng đơn hàng trong mỗi tháng năm 2011
+x = d4.index.get_level_values(0)
+plt.bar(x,d4["InvoiceDate"])
+plt.title('Number of Invoices in 2011 (monthly)', fontsize = 16)
+plt.xlabel('Month', fontsize = 14)
+plt.ylabel('#Invoices', fontsize = 14)
 plt.show()

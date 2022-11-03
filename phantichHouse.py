@@ -1,50 +1,28 @@
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler,StandardScaler,RobustScaler
-# Đọc dữ liệu
-df = pd.read_excel("house_price_dống-da.xlsx")
-#Xóa bỏ tất cả những dòng dữ liệu không có thông tin về giá
-df["price"].dropna()
-# Thực hiện xử lí dữ liệu khuyết thiếu
-df1=df["land_certificate"].fillna("Không có thông tin")
-print(df1)
-# Thay the khuyet thieu bang du lieu xuat hien nhieu nhat
+import seaborn as sns
+from scipy import stats
 
-df["house_direction"].fillna(df["house_direction"].mode()[0],inplace=True)
-print(df["house_direction"])
+df = pd.read_csv("house_price_Dống-Da_Hà-Nội_subdata.csv")
+# Vẽ biểu đồ so sánh phân phối giá (triệu đ/m2) giữa nhà phố và nhà ngõ
+# sns.kdeplot(data=df,x="price",hue="property_type")
+# plt.show()
+# Kiểm định giả thuyết giá nhà mặt phố cao hơn giá nhà trong ngõ với mức ý nghĩa 5%
+df1 = df[df["property_type"]=="mat pho"]
+df2 = df[df["property_type"]=="trong ngo"]
+print(stats.ttest_ind(df1["price"].dropna(),df2["price"].dropna(),equal_var=False))
+# Giả thuyết không: a1=a2
+# Giả thuyết đối: a1-a2>0
+# Do pvalue > 5% nên chưa đủ căn cứ để bác bỏ H0
+# Kết luận: Với mức ý nghã 5%, thì giá nhà trong ngõ bằng với giá nhà mặt phố
 
-df["balcony_direction"].fillna(df["balcony_direction"].mode()[0],inplace=True)
-print(df["balcony_direction"])
+# Giá của những căn nhà không có thông tin về giấy tờ pháp lí thấp hơn giá nhà những căn nhà có thông tin về giấy tờ pháp lí, với mức ý nghĩa 5%
+# Giả thuyết không: a1 = a2
+# Giả thuyết đối: a1 < a2
+df3 = df[df["land_certificate"].isnull()]
 
-df["toilet"].fillna(df["toilet"].mode()[0],inplace=True)
-print(df["toilet"])
+df4 = df[df["land_certificate"].notna()]
 
-df["bedroom"].fillna(df["bedroom"].mode()[0],inplace=True)
-print(df["bedroom"])
-
-df["floor"].fillna(df["floor"].mode()[0],inplace=True)
-print(df["floor"])
-#Lọc thông tin những bất động sản ở trong phố thành bộ dữ liệu nhà phố
-df = df[df["type_of_land"]=="Bán nhà mặt phố"]
-# Tính toán giá trên m2
-df["gia/m2"] = df["price"]/df["area"]
-# Lọc giá trị ngoại lai
-Q1 = df["gia/m2"].quantile(0.25)
-Q3 = df["gia/m2"].quantile(0.75)
-IQR = Q3 - Q1
-df = df[["area","gia/m2"]]
-df_s = df[~((df<(Q1-1.5*IQR)) | (df>(Q3+1.5*IQR))).any(axis=1)]
-# Chuẩn hoá dữ liệu cột gia/m2
-scaler = MinMaxScaler()
-df_c = scaler.fit_transform(df_s[["gia/m2"]])
-print(pd.DataFrame(df_c).describe())
-
-scaler = RobustScaler()
-df_c = scaler.fit_transform(df_s[["gia/m2"]])
-print(pd.DataFrame(df_c).describe())
-
-scaler = StandardScaler()
-df_c = scaler.fit_transform(df_s[["gia/m2"]])
-print(pd.DataFrame(df_c).describe())
+print(stats.ttest_ind(df3["price"].dropna(),df4["price"].dropna(),equal_var=False))
+# Do pvalue
